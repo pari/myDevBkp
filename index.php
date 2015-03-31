@@ -1,5 +1,4 @@
 <?php
-
 // --generateconfig
 // functionality to Create Config File Dump with list of databases and tables from source 
 // ask for destination db host name and credentials
@@ -8,9 +7,6 @@
 // functionality to read a config file and start executing 
 // the lines (mysqldump accordingly ) and executing on destination server
 // drop and copy all views and stored procedures and triggers from a database
-
-
-
 
 
 function parseArguments(){
@@ -298,7 +294,7 @@ if( array_key_exists('useconfig', $arguments) ){
 			if( $this_tableName['exportTable'] == 'Y' ){
 				echo "\nexporting table {$this_tableName['tableName']}" ;
 				//echo "mysqldump --routines --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string} > {$opf}"."\n";
-				$dump_exec_cmd = "mysqldump --routines --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string}" ;
+				$dump_exec_cmd = "mysqldump --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string}" ;
 				if($opf){
 					exec( " {$dump_exec_cmd} >> {$opf}" );	
 				}else{
@@ -308,7 +304,7 @@ if( array_key_exists('useconfig', $arguments) ){
 		}
 
 
-		// export all views and functions from here into host 
+		// export all views from source database 
 		$MYSQLCONN->exequery( "use {$dbname}" );
 		$tables = $MYSQLCONN->exequery_return_MultiAssocArray( "show full tables where Table_Type = 'VIEW' " );
 		$listOfViews = array();
@@ -330,22 +326,22 @@ if( array_key_exists('useconfig', $arguments) ){
 			$this_view_create_string = $res['Create View'] ;
 
 			if($opf){
-				file_put_contents( $opf , "\n DROP VIEW IF EXISTS `{$this_view_name}` ; " , FILE_APPEND );
 				file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
 			}else{
 				$MYSQLCONN_DEST->exequery( "use {$dbname}" );
-				$MYSQLCONN_DEST->exequery( " DROP VIEW IF EXISTS `{$this_view_name}` " );
 				$MYSQLCONN_DEST->exequery( $this_view_create_string );				
 			}
 		}
+
+		// export all functions from source database
+		$dump_exec_cmd = "mysqldump --routines --triggers=false --no-create-info --no-data --no-create-db --skip-opt  -u {$su} -p{$sp} -h {$sh} {$dbname} " ;
+		if($opf){
+			exec( " {$dump_exec_cmd} >> {$opf}" );	
+		}else{
+			exec( " {$dump_exec_cmd} | {$pipe_destination} {$dbname} " );	
+		}
 	}
 
-	
-
 }
-
-
-
-
 
 ?>
