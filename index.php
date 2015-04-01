@@ -241,12 +241,15 @@ if( array_key_exists('generateconfig', $arguments) ){
 
 
 if( array_key_exists('useconfig', $arguments) ){
-// --useconfig=FILE -sh=HOST -su=USER -sp=PASSWORD {-dh=HOST -du=USER -dp=PASSWORD} {-opf=op.txt}
+// --useconfig=FILE -sh=HOST -su=USER -sp=PASSWORD {-dh=HOST -du=USER -dp=PASSWORD} {-opf=op.txt} --locktables='Y'
 	$pwd = dirname(__FILE__)."/";
 	$ipfile = $arguments['useconfig'] ;
 	$sh = $arguments['sh'] ;
 	$su = $arguments['su'] ;
 	$sp = $arguments['sp'] ;
+
+	// by default we use mysqldump in skip-lock-tables mode
+	$lock_string = (array_key_exists('locktables', $arguments) && $arguments['locktables'] =='Y' ) ? " --lock-tables " : " --skip-lock-tables " ;
 
 	$MYSQLCONN = new CFWK_DB();
 	$MYSQLCONN->DB_HOST = $sh;
@@ -292,9 +295,9 @@ if( array_key_exists('useconfig', $arguments) ){
 		foreach($tables as $this_tableName ){
 			$where_string = (trim($this_tableName['whereCondition'])) ? " --where=\"{$this_tableName['whereCondition']}\" " : "" ; 
 			if( $this_tableName['exportTable'] == 'Y' ){
-				echo "\nexporting table {$this_tableName['tableName']}" ;
+				echo "\nexporting table {$this_tableName['tableName']}\n" ;
 				//echo "mysqldump --routines --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string} > {$opf}"."\n";
-				$dump_exec_cmd = "mysqldump --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string}" ;
+				$dump_exec_cmd = "mysqldump {$lock_string} --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string}" ;
 				if($opf){
 					exec( " {$dump_exec_cmd} >> {$opf}" );	
 				}else{
@@ -302,7 +305,6 @@ if( array_key_exists('useconfig', $arguments) ){
 				}
 			}
 		}
-
 
 		// export all views from source database 
 		$MYSQLCONN->exequery( "use {$dbname}" );
@@ -334,8 +336,8 @@ if( array_key_exists('useconfig', $arguments) ){
 		}
 
 		// export all functions from source database
-		$dump_exec_cmd = "mysqldump --routines --triggers=false --no-create-info --no-data --no-create-db --skip-opt  -u {$su} -p{$sp} -h {$sh} {$dbname} " ;
-		if($opf){
+		$dump_exec_cmd = "mysqldump {$lock_string} --routines --triggers=false --no-create-info --no-data --no-create-db --skip-opt  -u {$su} -p{$sp} -h {$sh} {$dbname} " ;
+		if( $opf ){
 			exec( " {$dump_exec_cmd} >> {$opf}" );	
 		}else{
 			exec( " {$dump_exec_cmd} | {$pipe_destination} {$dbname} " );	
