@@ -11,6 +11,19 @@
 
 $view_dependency_hierarchy_length = 4 ;
 
+function return_row_matching_key_value_from_givenMultiAssocArray( $givenArray , $key , $value ){
+
+	foreach( $givenArray as $this_row ){
+		if( array_key_exists($key, $this_row) && $this_row[$key] === $value ){
+			return $this_row;
+		}
+	}
+
+	return array();
+}
+
+
+
 function parseArguments(){
 	// copied from https://gist.github.com/magnetik/2959619 
 	global $argv ;
@@ -173,12 +186,13 @@ if( count($arguments) == 1 &&  array_key_exists('help', $arguments) ){
 	
 	echo "\n--help Prints this help\n";
 
-	echo "\n--generateconfig --h=HOST --u=USER --p=PASSWORD {--databases=db1,db2,db3}
+	echo "\n--generateconfig --h=HOST --u=USER --p=PASSWORD {--databases=db1,db2,db3} {--updateconfig=FILE}
 	connects to mysql server HOST with USER and PASSWORD
 	and generates initial config file outputs to stdout
 	use output redirection to save into specific config file.
 	You can later edit this file to add specific conditions against each table or database.
 	";
+
 
 	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD {--dh=HOST --du=USER --dp=PASSWORD} {--opf=dump.sql} --locktables='Y'
 	Parses config FILE and connects to source host 'sh'
@@ -237,9 +251,28 @@ if( array_key_exists('generateconfig', $arguments) ){
 
 	}
 
-	$CONFIG_FILE = json_encode($CONFIG_FILE, JSON_PRETTY_PRINT );
+	if( array_key_exists('updateconfig', $arguments)){
+		$old_config = json_decode(file_get_contents( $arguments['updateconfig'] ) , true );
+		$merged_config_file = array();
+		foreach( $CONFIG_FILE as $dbname => $tables  ){
+			$merged_config_file[$dbname] = array();			
+			foreach( $tables as $this_table_row ){
+				// if this new table is in old config file import its whereCondition 
+				$matching_row_in_oldConfig = ( array_key_exists( $dbname , $old_config ) ) ? return_row_matching_key_value_from_givenMultiAssocArray( $old_config[$dbname] , 'tableName' , $this_table_row ['tableName'] ) : array() ;
+				if( count( $matching_row_in_oldConfig ) && array_key_exists('whereCondition', $matching_row_in_oldConfig) ){
+					$this_table_row['whereCondition'] = $matching_row_in_oldConfig['whereCondition'];
+				}
+				$merged_config_file[$dbname][] = $this_table_row ;
+			}
+		}
 
-	echo $CONFIG_FILE;
+		$NEW_CONFIG_FILE = json_encode($merged_config_file, JSON_PRETTY_PRINT );
+		file_put_contents( $arguments['updateconfig'] , $NEW_CONFIG_FILE );
+		echo "\n Updated Config file \n";
+	}else{
+		$NEW_CONFIG_FILE = json_encode($CONFIG_FILE, JSON_PRETTY_PRINT );
+		echo $NEW_CONFIG_FILE;
+	}
 }
 
 
