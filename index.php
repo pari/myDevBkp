@@ -8,6 +8,7 @@
 // the lines (mysqldump accordingly ) and executing on destination server
 // drop and copy all views and stored procedures and triggers from a database
 
+$view_dependency_hierarchy_length = 4 ;
 
 function parseArguments(){
 	// copied from https://gist.github.com/magnetik/2959619 
@@ -320,21 +321,33 @@ if( array_key_exists('useconfig', $arguments) ){
 			$listOfViews[] = $thisTbl[$this_tbl_column]  ;
 		}
 
+		$create_view_queries = array();
 		foreach( $listOfViews as $this_view_name ){
 			$res = $MYSQLCONN->exequery_return_single_row_as_AssocArray( " SHOW CREATE VIEW `{$this_view_name}` " );
 			if( !$res || !count($res) ){
 				continue;
 			}
-			$this_view_create_string = $res['Create View'] ;
+			$create_view_queries[] = $res['Create View'] ;
+		}
 
-			if($opf){
-				file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
-			}else{
-				$MYSQLCONN_DEST->exequery( "use {$dbname}" );
-				$MYSQLCONN_DEST->exequery( $this_view_create_string );				
+
+		// I have views that depends on other views. Creation of the child views are failing when trying to 
+		// create before the parent view. But i do not have time to figure out the order in which the views
+		// have to be created. Until then this ugly hack should do. change $view_dependency_hierarchy_length to your requirement.
+		
+		for($v =0 ; $v < $view_dependency_hierarchy_length ; $v++){
+			foreach( $create_view_queries as $this_view_create_string ){
+				if($opf){
+					file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
+				}else{
+					echo "\nCreating view {$this_view_name}";
+					$MYSQLCONN_DEST->exequery( "use {$dbname}" );
+					$MYSQLCONN_DEST->exequery( $this_view_create_string );				
+				}
 			}
 		}
 
+		echo "\n*** Exporting Stored Procedures \n";
 		// export all functions from source database
 		$dump_exec_cmd = "mysqldump {$lock_string} --routines --triggers=false --no-create-info --no-data --no-create-db --skip-opt  -u {$su} -p{$sp} -h {$sh} {$dbname} " ;
 		if( $opf ){
