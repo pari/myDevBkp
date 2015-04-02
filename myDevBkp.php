@@ -1,13 +1,15 @@
 #!/usr/bin/php -q
 <?php
-// --generateconfig
-// functionality to Create Config File Dump with list of databases and tables from source 
-// ask for destination db host name and credentials
+/* 
+Copyright © 2015 by - Sai Silks (Kalamandir) Limited . 
+MIT Licensed. 
+
+// myDevBkp lets you clone databases and tables from a production MySql database server for development purposes 
+// while ignoring specified databases or tables or specified rows from some tables. 
+
+*/
 
 
-// functionality to read a config file and start executing 
-// the lines (mysqldump accordingly ) and executing on destination server
-// drop and copy all views and stored procedures and triggers from a database
 
 $view_dependency_hierarchy_length = 4 ;
 
@@ -182,7 +184,7 @@ class CFWK_DB {
 
 $arguments = parseArguments();
 
-if( count($arguments) == 1 &&  array_key_exists('help', $arguments) ){
+if( count($arguments) == 0 || (count($arguments) == 1 &&  array_key_exists('help', $arguments) ) ){
 	
 	echo "\n--help Prints this help\n";
 
