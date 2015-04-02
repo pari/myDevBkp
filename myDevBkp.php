@@ -331,7 +331,7 @@ if( array_key_exists('useconfig', $arguments) ){
 			if( !$res || !count($res) ){
 				continue;
 			}
-			$create_view_queries[] = $res['Create View'] ;
+			$create_view_queries[$this_view_name] = $res['Create View'] ;
 		}
 
 
@@ -340,11 +340,11 @@ if( array_key_exists('useconfig', $arguments) ){
 		// have to be created. Until then this ugly hack should do. change $view_dependency_hierarchy_length to your requirement.
 		
 		for($v =0 ; $v < $view_dependency_hierarchy_length ; $v++){
-			foreach( $create_view_queries as $this_view_create_string ){
+			foreach( $create_view_queries as $this_view_name => $this_view_create_string ){
 				if($opf){
 					file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
 				}else{
-					echo "\nCreating view {$this_view_name}";
+					echo "\nCreating view {$this_view_name}" ;
 					$MYSQLCONN_DEST->exequery( "use {$dbname}" );
 					$MYSQLCONN_DEST->exequery( $this_view_create_string );				
 				}
