@@ -1,3 +1,4 @@
+#!/usr/bin/php -q
 <?php
 // --generateconfig
 // functionality to Create Config File Dump with list of databases and tables from source 
@@ -172,14 +173,14 @@ if( count($arguments) == 1 &&  array_key_exists('help', $arguments) ){
 	
 	echo "\n--help Prints this help\n";
 
-	echo "\n--generateconfig --h=HOST --u=USER --p=PASSWORD
+	echo "\n--generateconfig --h=HOST --u=USER --p=PASSWORD {--databases=db1,db2,db3}
 	connects to mysql server HOST with USER and PASSWORD
 	and generates initial config file outputs to stdout
 	use output redirection to save into specific config file.
 	You can later edit this file to add specific conditions against each table or database.
 	";
 
-	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD --dh=HOST --du=USER --dp=PASSWORD --opf=dump.sql
+	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD {--dh=HOST --du=USER --dp=PASSWORD} {--opf=dump.sql} --locktables='Y'
 	Parses config FILE and connects to source host 'sh'
 	and restores tables into destination host 'dh'
 	while applying conditions configured in FILE
@@ -189,7 +190,6 @@ if( count($arguments) == 1 &&  array_key_exists('help', $arguments) ){
 
 
 if( array_key_exists('generateconfig', $arguments) ){
-	// TODO : Option to export specific database instad of default all 
 	$CONFIG_FILE = array();
 	$MYSQLCONN = new CFWK_DB();
 	$MYSQLCONN->DB_HOST = $arguments['h'];
@@ -197,7 +197,11 @@ if( array_key_exists('generateconfig', $arguments) ){
 	$MYSQLCONN->DB_PASSWORD = $arguments['p'];
 	$MYSQLCONN->db_init();
 
-	$ListOfDatabases = $MYSQLCONN->exequery_return_strict_array("show databases");
+	if( array_key_exists('databases', $arguments ) ){
+		$ListOfDatabases = explode(",", $arguments['databases'] );
+	}else{
+		$ListOfDatabases = $MYSQLCONN->exequery_return_strict_array("show databases");	
+	}
 	
 	foreach( $ListOfDatabases as $this_db ){
 		$CONFIG_FILE[ $this_db ] = array();
