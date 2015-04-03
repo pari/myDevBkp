@@ -196,7 +196,7 @@ if( count($arguments) == 0 || (count($arguments) == 1 &&  array_key_exists('help
 	";
 
 
-	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD {--dh=HOST --du=USER --dp=PASSWORD} {--opf=dump.sql} --locktables='Y'
+	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD {--dh=HOST --du=USER --dp=PASSWORD} {--opf=dump.sql} {--locktables='Y'} {--fullbackup=BACKUP_PATH}
 	Parses config FILE and connects to source host 'sh'
 	and restores tables into destination host 'dh'
 	while applying conditions configured in FILE
@@ -297,15 +297,29 @@ if( array_key_exists('useconfig', $arguments) ){
 	$MYSQLCONN->DB_PASSWORD = $sp;
 	$MYSQLCONN->db_init();
 
+	$opf = '' ;
+	$fullbackup = '' ;
 	if( array_key_exists('opf', $arguments) ) {
 		$opf = $pwd.$arguments['opf'] ;	
 		$pipe_destination = "" ;
+	}elseif( array_key_exists('fullbackup', $arguments) ){
+		$fullbackup = $arguments['fullbackup'] ;
+		$lock_string = " --lock-tables " ;
+		if( !is_dir($fullbackup) ){
+			mkdir( $fullbackup );
+		}
 	}else{
-		$opf = '' ;
-		$dh = $arguments['dh'] ;
-		$du = $arguments['du'] ;
-		$dp = $arguments['dp'] ;
-		$pipe_destination = " mysql -u {$du} -p{$dp} -h {$dh} " ;
+		
+		if( array_key_exists('du', $arguments) && array_key_exists('dh', $arguments) && array_key_exists('dp', $arguments) ){
+			$dh = $arguments['dh'] ;
+			$du = $arguments['du'] ;
+			$dp = $arguments['dp'] ;
+			$pipe_destination = " mysql -u {$du} -p{$dp} -h {$dh} " ;
+		}else{
+			echo "\n You must specify one of {--opf=xxx} or {--dh=xxx --du=xxx --dp=xxx} or {--fullbackup=XXX} in combination with --useconfig";
+			exit();
+		}
+
 
 		$MYSQLCONN_DEST = new CFWK_DB();
 		$MYSQLCONN_DEST->DB_HOST = $dh;
@@ -326,6 +340,8 @@ if( array_key_exists('useconfig', $arguments) ){
 		if($opf){
 			file_put_contents( $opf , "\ndrop database if exists `{$dbname}` ; " , FILE_APPEND );
 			file_put_contents( $opf , "\ncreate database `{$dbname}` ; \n\n " , FILE_APPEND );
+		}elseif($fullbackup){
+			mkdir( $fullbackup."/".$dbname );
 		}else{
 			exec( "echo 'drop database if exists `{$dbname}`' |  {$pipe_destination} ");
 			exec( "echo 'create database `{$dbname}`' |  {$pipe_destination} ");
@@ -340,12 +356,17 @@ if( array_key_exists('useconfig', $arguments) ){
 				$dump_exec_cmd = "mysqldump {$lock_string} --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string}" ;
 				if($opf){
 					exec( " {$dump_exec_cmd} >> {$opf}" );	
+				}elseif( $fullbackup ){
+					$bkp_filename = $fullbackup."/".$dbname."/TBL_".$this_tableName['tableName'].".sql" ; 
+					exec( " {$dump_exec_cmd} >> {$bkp_filename}" );	
 				}else{
 					exec( " {$dump_exec_cmd} | {$pipe_destination} {$dbname} " );	
 				}
 			}
 		}
 
+
+		echo "\n*** Exporting Views Procedures \n";
 		// export all views from source database 
 		$MYSQLCONN->exequery( "use {$dbname}" );
 		$tables = $MYSQLCONN->exequery_return_MultiAssocArray( "show full tables where Table_Type = 'VIEW' " );
@@ -378,6 +399,9 @@ if( array_key_exists('useconfig', $arguments) ){
 			foreach( $create_view_queries as $this_view_name => $this_view_create_string ){
 				if($opf){
 					file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
+				}elseif( $fullbackup ){
+					$bkp_filename = $fullbackup."/".$dbname."/VIEW_".$this_view_name.".sql" ; 
+					file_put_contents( $bkp_filename , "\n {$this_view_create_string} ; " , FILE_APPEND );
 				}else{
 					echo "\nCreating view {$this_view_name}" ;
 					$MYSQLCONN_DEST->exequery( "use {$dbname}" );
@@ -391,6 +415,9 @@ if( array_key_exists('useconfig', $arguments) ){
 		$dump_exec_cmd = "mysqldump {$lock_string} --routines --triggers=false --no-create-info --no-data --no-create-db --skip-opt  -u {$su} -p{$sp} -h {$sh} {$dbname} " ;
 		if( $opf ){
 			exec( " {$dump_exec_cmd} >> {$opf}" );	
+		}elseif( $fullbackup ){
+			$bkp_filename = $fullbackup."/".$dbname."/StoredProcedures_.sql" ; 
+			exec( " {$dump_exec_cmd} >> {$bkp_filename}" );	
 		}else{
 			exec( " {$dump_exec_cmd} | {$pipe_destination} {$dbname} " );	
 		}
