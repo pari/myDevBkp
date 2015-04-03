@@ -6,6 +6,5 @@ As a developer you might want to restore a production database snapshot every co
 
 This tool also be used for taking a full mysql database backup such that you can have a seperate backup sql file for each table or view and one additional backup file for all the stored procedures together. Having database backups this way will make it extremely easy to retreive past data in one ore more selected tables.
 
-
-Requirements
+#### Requirements
 myDebBkp used mysqldump utility for taking the backups.  Based on how you are using it you might also need to have the `mysql` cli client utility.

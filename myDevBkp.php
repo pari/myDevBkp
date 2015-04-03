@@ -357,8 +357,8 @@ if( array_key_exists('useconfig', $arguments) ){
 				if($opf){
 					exec( " {$dump_exec_cmd} >> {$opf}" );	
 				}elseif( $fullbackup ){
-					$bkp_filename = $fullbackup."/".$dbname."/TBL_".$this_tableName['tableName'].".sql" ; 
-					exec( " {$dump_exec_cmd} >> {$bkp_filename}" );	
+					$bkp_filename = $fullbackup."/".$dbname."/TBL_".$this_tableName['tableName'].".sql.gz" ; 
+					exec( " {$dump_exec_cmd} | gzip > {$bkp_filename}" );	
 				}else{
 					exec( " {$dump_exec_cmd} | {$pipe_destination} {$dbname} " );	
 				}
