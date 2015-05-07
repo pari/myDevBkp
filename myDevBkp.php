@@ -348,7 +348,6 @@ if( array_key_exists('useconfig', $arguments) ){
 			exec( "echo 'create database `{$dbname}`' |  {$pipe_destination} ");
 		}
 
-		// TODO : any new tables on source dbhost which are not in config file must be exported also 
 		foreach($tables as $this_tableName ){
 			$where_string = (trim($this_tableName['whereCondition'])) ? " --where=\"{$this_tableName['whereCondition']}\" " : "" ; 
 			if( $this_tableName['exportTable'] == 'Y' ){
@@ -369,47 +368,21 @@ if( array_key_exists('useconfig', $arguments) ){
 
 		echo "\n*** Exporting Views Procedures \n";
 		// export all views from source database 
-		$MYSQLCONN->exequery( "use {$dbname}" );
-		$tables = $MYSQLCONN->exequery_return_MultiAssocArray( "show full tables where Table_Type = 'VIEW' " );
-		$listOfViews = array();
-		foreach( $tables as $thisTbl ){
-			$this_tbl_column = '' ;
-			foreach( $thisTbl as $colname => $colval ){
-				if( $colname != 'Table_type' ){
-					$this_tbl_column = $colname ;
-				}
-			}
-			$listOfViews[] = $thisTbl[$this_tbl_column]  ;
-		}
-
-		$create_view_queries = array();
-		foreach( $listOfViews as $this_view_name ){
-			$res = $MYSQLCONN->exequery_return_single_row_as_AssocArray( " SHOW CREATE VIEW `{$this_view_name}` " );
-			if( !$res || !count($res) ){
-				continue;
-			}
-			$create_view_queries[$this_view_name] = $res['Create View'] ;
-		}
-
-		
+		$fetch_views_cmd = "mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname}" ;
 		if($opf){
-			exec( " mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname} >> {$opf}" );
+			exec( " {$fetch_views_cmd} >> {$opf}" );
 			//file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
 		}elseif( $fullbackup ){
 			$bkp_filename = $fullbackup."/".$dbname."/VIEWs.sql" ; 
-			exec( " mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname} > {$bkp_filename}" );
+			exec( " {$fetch_views_cmd} > {$bkp_filename}" );
 			//file_put_contents( $bkp_filename , "\n {$this_view_create_string} ; " , FILE_APPEND );
 		}else{
-			// I have views that depends on other views. Creation of the child views are failing when trying to 
-			// create before the parent view. But i do not have time to figure out the order in which the views
-			// have to be created. Until then this ugly hack should do. change $view_dependency_hierarchy_length to your requirement.
-			for($v =0 ; $v < $view_dependency_hierarchy_length ; $v++){
-				foreach( $create_view_queries as $this_view_name => $this_view_create_string ){				
-					echo "\nCreating view {$this_view_name}" ;
-					$MYSQLCONN_DEST->exequery( "use {$dbname}" );
-					$MYSQLCONN_DEST->exequery( $this_view_create_string );
-				}
-			}
+			$tmp_file_name = "/tmp/".date("YmdHis")."_{$dbname}_views.sql" ;
+			exec( " {$fetch_views_cmd} > {$tmp_file_name}" );
+			sleep(2);
+			exec( " {$pipe_destination} {$dbname} < {$tmp_file_name} " );
+			sleep(2);
+			exec( "rm {$tmp_file_name}" );
 		}
 
 		echo "\n*** Exporting Stored Procedures \n";
