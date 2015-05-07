@@ -391,23 +391,23 @@ if( array_key_exists('useconfig', $arguments) ){
 			$create_view_queries[$this_view_name] = $res['Create View'] ;
 		}
 
-
-		// I have views that depends on other views. Creation of the child views are failing when trying to 
-		// create before the parent view. But i do not have time to figure out the order in which the views
-		// have to be created. Until then this ugly hack should do. change $view_dependency_hierarchy_length to your requirement.
 		
-		for($v =0 ; $v < $view_dependency_hierarchy_length ; $v++){
-			foreach( $create_view_queries as $this_view_name => $this_view_create_string ){
-				if($opf){
-					exec( " mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname} >> {$opf}" );
-					//file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
-				}elseif( $fullbackup ){
-					$bkp_filename = $fullbackup."/".$dbname."/VIEW_".$this_view_name.".sql" ; 
-					file_put_contents( $bkp_filename , "\n {$this_view_create_string} ; " , FILE_APPEND );
-				}else{
+		if($opf){
+			exec( " mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname} >> {$opf}" );
+			//file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
+		}elseif( $fullbackup ){
+			$bkp_filename = $fullbackup."/".$dbname."/VIEWs.sql" ; 
+			exec( " mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname} > {$bkp_filename}" );
+			//file_put_contents( $bkp_filename , "\n {$this_view_create_string} ; " , FILE_APPEND );
+		}else{
+			// I have views that depends on other views. Creation of the child views are failing when trying to 
+			// create before the parent view. But i do not have time to figure out the order in which the views
+			// have to be created. Until then this ugly hack should do. change $view_dependency_hierarchy_length to your requirement.
+			for($v =0 ; $v < $view_dependency_hierarchy_length ; $v++){
+				foreach( $create_view_queries as $this_view_name => $this_view_create_string ){				
 					echo "\nCreating view {$this_view_name}" ;
 					$MYSQLCONN_DEST->exequery( "use {$dbname}" );
-					$MYSQLCONN_DEST->exequery( $this_view_create_string );				
+					$MYSQLCONN_DEST->exequery( $this_view_create_string );
 				}
 			}
 		}
