@@ -340,6 +340,7 @@ if( array_key_exists('useconfig', $arguments) ){
 		if($opf){
 			file_put_contents( $opf , "\ndrop database if exists `{$dbname}` ; " , FILE_APPEND );
 			file_put_contents( $opf , "\ncreate database `{$dbname}` ; \n\n " , FILE_APPEND );
+			file_put_contents( $opf , "\nUSE `{$dbname}` ; \n\n " , FILE_APPEND );
 		}elseif($fullbackup){
 			mkdir( $fullbackup."/".$dbname );
 		}else{
@@ -398,7 +399,8 @@ if( array_key_exists('useconfig', $arguments) ){
 		for($v =0 ; $v < $view_dependency_hierarchy_length ; $v++){
 			foreach( $create_view_queries as $this_view_name => $this_view_create_string ){
 				if($opf){
-					file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
+					exec( " mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname} >> {$opf}" );
+					//file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
 				}elseif( $fullbackup ){
 					$bkp_filename = $fullbackup."/".$dbname."/VIEW_".$this_view_name.".sql" ; 
 					file_put_contents( $bkp_filename , "\n {$this_view_create_string} ; " , FILE_APPEND );
