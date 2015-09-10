@@ -253,8 +253,13 @@ if( array_key_exists('generateconfig', $arguments) ){
 
 	}
 
-	if( array_key_exists('updateconfig', $arguments)){
-		$old_config = json_decode(file_get_contents( $arguments['updateconfig'] ) , true );
+	if( array_key_exists('updateconfig', $arguments) ){
+		if( file_exists( $arguments['updateconfig'] ) ){
+			$old_config = json_decode(file_get_contents( $arguments['updateconfig'] ) , true );
+		}else{
+			$old_config = array();
+		}
+
 		$merged_config_file = array();
 		foreach( $CONFIG_FILE as $dbname => $tables  ){
 			$merged_config_file[$dbname] = array();			
