@@ -355,6 +355,17 @@ if( array_key_exists('useconfig', $arguments) ){
 
 		foreach($tables as $this_tableName ){
 			$where_string = (trim($this_tableName['whereCondition'])) ? " --where=\"{$this_tableName['whereCondition']}\" " : "" ; 
+
+			if(array_key_exists('skiptableslike', $arguments)){
+				if (strpos( strtolower($this_tableName['tableName']) , strtolower($arguments['skiptableslike'])) === false) {
+
+				} else {
+					echo "\n => Skipping table {$this_tableName['tableName']} because of table like {$arguments['skiptableslike']}" ;
+					continue;
+				}
+			}
+			
+
 			if( $this_tableName['exportTable'] == 'Y' ){
 				echo "\nexporting table {$this_tableName['tableName']}\n" ;
 				//echo "mysqldump --routines --triggers -u {$su} -p{$sp} -h {$sh} {$dbname} {$this_tableName['tableName']} {$where_string} > {$opf}"."\n";
