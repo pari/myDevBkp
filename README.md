@@ -11,5 +11,5 @@ myDebBkp used mysqldump utility for taking the backups.  Based on how you are us
 
 
 #### Todo
-Option to dump only tables with out views and triggers and storedprocedures
+Option to dump only tables with out views and triggers and storedprocedures<BR>
 Option to dump data into one file and Views, Triggers and StoredProcedures into seperate files
