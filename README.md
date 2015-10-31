@@ -8,3 +8,8 @@ This tool also be used for taking a full mysql database backup such that you can
 
 #### Requirements
 myDebBkp used mysqldump utility for taking the backups.  Based on how you are using it you might also need to have the `mysql` cli client utility.
+
+
+#### Todo
+Option to dump only tables with out views and triggers and storedprocedures
+Option to dump data into one file and Views, Triggers and StoredProcedures into seperate files
