@@ -382,6 +382,27 @@ if( array_key_exists('useconfig', $arguments) ){
 		}
 
 
+
+
+		echo "\n*** Exporting Stored Procedures \n";
+		// export all functions from source database
+		$dump_exec_cmd = "mysqldump {$lock_string} --routines --triggers=false --no-create-info --no-data --no-create-db --skip-opt  -u {$su} -p{$sp} -h {$sh} {$dbname} " ;
+		if( $opf ){
+			exec( " {$dump_exec_cmd} >> {$opf}" );	
+		}elseif( $fullbackup ){
+			$bkp_filename = $fullbackup."/".$dbname."/StoredProcedures_.sql" ; 
+			exec( " {$dump_exec_cmd} >> {$bkp_filename}" );	
+		}else{
+			exec( " {$dump_exec_cmd} | {$pipe_destination} {$dbname} " );	
+		}
+
+
+
+
+
+
+
+
 		echo "\n*** Exporting Views Procedures \n";
 		// export all views from source database 
 		$fetch_views_cmd = "mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname}" ;
@@ -401,17 +422,9 @@ if( array_key_exists('useconfig', $arguments) ){
 			exec( "rm {$tmp_file_name}" );
 		}
 
-		echo "\n*** Exporting Stored Procedures \n";
-		// export all functions from source database
-		$dump_exec_cmd = "mysqldump {$lock_string} --routines --triggers=false --no-create-info --no-data --no-create-db --skip-opt  -u {$su} -p{$sp} -h {$sh} {$dbname} " ;
-		if( $opf ){
-			exec( " {$dump_exec_cmd} >> {$opf}" );	
-		}elseif( $fullbackup ){
-			$bkp_filename = $fullbackup."/".$dbname."/StoredProcedures_.sql" ; 
-			exec( " {$dump_exec_cmd} >> {$bkp_filename}" );	
-		}else{
-			exec( " {$dump_exec_cmd} | {$pipe_destination} {$dbname} " );	
-		}
+
+		
+
 	}
 
 }
