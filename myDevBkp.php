@@ -308,7 +308,11 @@ if( array_key_exists('useconfig', $arguments) ){
 	$opf = '' ;
 	$fullbackup = '' ;
 	if( array_key_exists('opf', $arguments) ) {
-		$opf = $pwd.$arguments['opf'] ;	
+		if( strpos($arguments['opf'] , '/') === 0 ){
+		
+		}else{
+			$opf = $pwd.$arguments['opf'] ;				
+		}
 		$pipe_destination = "" ;
 	}elseif( array_key_exists('fullbackup', $arguments) ){
 		$fullbackup = $arguments['fullbackup'] ;
