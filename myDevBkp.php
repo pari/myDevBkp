@@ -200,6 +200,9 @@ if( count($arguments) == 0 || (count($arguments) == 1 &&  array_key_exists('help
 	Parses config FILE and connects to source host 'sh'
 	and restores tables into destination host 'dh'
 	while applying conditions configured in FILE
+	
+	Use fullbackup option when you want to get backup as seperate file for each table 
+	
 	\n";
 
 }
