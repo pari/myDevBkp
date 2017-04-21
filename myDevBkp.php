@@ -309,7 +309,13 @@ if( array_key_exists('useconfig', $arguments) ){
 	$fullbackup = '' ;
 	if( array_key_exists('opf', $arguments) ) {
 		if( strpos($arguments['opf'] , '/') === 0 ){
-		
+			$holdingdir = dirname($arguments['opf']);
+			if( !is_dir($holdingdir) ){
+				mkdir( $holdingdir );
+			}
+			if(!file_exists( $arguments['opf'] )){
+				touch($arguments['opf'] );
+			}
 		}else{
 			$opf = $pwd.$arguments['opf'] ;				
 		}
