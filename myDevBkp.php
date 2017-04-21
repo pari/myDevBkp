@@ -313,9 +313,11 @@ if( array_key_exists('useconfig', $arguments) ){
 			if( !is_dir($holdingdir) ){
 				mkdir( $holdingdir );
 			}
-			if(!file_exists( $arguments['opf'] )){
-				touch($arguments['opf'] );
+			if(file_exists( $arguments['opf'] )){
+				unlink($arguments['opf']);
 			}
+			touch($arguments['opf'] );
+			$opf = $arguments['opf'] ;
 		}else{
 			$opf = $pwd.$arguments['opf'] ;				
 		}
