@@ -416,7 +416,7 @@ if( array_key_exists('useconfig', $arguments) ){
 
 		echo "\n*** Exporting Views Procedures \n";
 		// export all views from source database 
-		$fetch_views_cmd = "mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname}" ;
+		$fetch_views_cmd = "mysql -u $su -p{$sp} -h {$sh} INFORMATION_SCHEMA --skip-column-names --batch -e \"select table_name from tables where table_type = 'VIEW' and table_schema = '{$dbname}'\"  | xargs -r mysqldump -u {$su} -p{$sp} -h {$sh} {$dbname}" ;
 		if($opf){
 			exec( " {$fetch_views_cmd} >> {$opf}" );
 			//file_put_contents( $opf , "\n {$this_view_create_string} ; " , FILE_APPEND );
