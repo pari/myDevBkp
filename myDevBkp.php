@@ -375,10 +375,13 @@ if( array_key_exists('useconfig', $arguments) ){
 	foreach( $config as $dbname => $tables  ){
 		echo "\n********************";
 		echo "\nexporting database {$dbname}\n" ;
-		if($opf && !$onlySPVIEWS ){
-			file_put_contents( $opf , "\ndrop database if exists `{$dbname}` ; " , FILE_APPEND );
-			file_put_contents( $opf , "\ncreate database `{$dbname}` ; \n\n " , FILE_APPEND );
-			file_put_contents( $opf , "\nUSE `{$dbname}` ; \n\n " , FILE_APPEND );
+
+		if($opf){
+			if($onlySPVIEWS===false){
+				file_put_contents( $opf , "\ndrop database if exists `{$dbname}` ; " , FILE_APPEND );
+				file_put_contents( $opf , "\ncreate database `{$dbname}` ; \n\n " , FILE_APPEND );
+				file_put_contents( $opf , "\nUSE `{$dbname}` ; \n\n " , FILE_APPEND );
+			}
 		}elseif($fullbackup){
 			mkdir( $fullbackup."/".$dbname );
 		}else{
