@@ -374,7 +374,12 @@ if( array_key_exists('useconfig', $arguments) ){
 
 	foreach( $config as $dbname => $tables  ){
 		echo "\n********************";
-		echo "\nexporting database {$dbname}\n" ;
+		if($opf && $onlySPVIEWS){
+			echo "\nexporting StoredProcedured and Views of {$dbname}\n" ;
+		}else{
+			echo "\nexporting database {$dbname}\n" ;	
+		}
+		
 
 		if($opf){
 			if($onlySPVIEWS===false){
