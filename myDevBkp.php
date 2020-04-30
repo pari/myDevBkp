@@ -1,12 +1,8 @@
 #!/usr/bin/php -q
 <?php
 /* 
-Copyright © 2015 by - Sai Silks (Kalamandir) Limited . 
-MIT Licensed. 
-
 // myDevBkp lets you clone databases and tables from a production MySql database server for development purposes 
 // while ignoring specified databases or tables or specified rows from some tables. 
-
 */
 
 
