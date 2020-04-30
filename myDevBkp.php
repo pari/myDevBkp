@@ -192,18 +192,28 @@ if( count($arguments) == 0 || (count($arguments) == 1 &&  array_key_exists('help
 	connects to mysql server HOST with USER and PASSWORD
 	and generates initial config file outputs to stdout
 	use output redirection to save into specific config file.
-	You can later edit this file to add specific conditions against each table or database.
-	";
+	You can later edit this file to add specific filter conditions 
+	against each table to backup only data of your interest.\n\n";
 
-
-	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD {--dh=HOST --du=USER --dp=PASSWORD} {--opf=dump.sql} {--locktables='Y'} {--fullbackup=BACKUP_PATH}
+	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD --opf=dump.sql {--locktables='Y'} 
 	Parses config FILE and connects to source host 'sh'
-	and restores tables into destination host 'dh'
-	while applying conditions configured in FILE
-	
-	Use fullbackup option when you want to get backup as seperate file for each table 
-	
-	\n";
+	and dumps all backup data into a single dump sql output file 
+	while applying where conditions on each table - as configured in useconfing $FILE
+	\n\n";
+
+
+	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD --fullbackup=BACKUP_PATH {--locktables='Y'} 
+	Parses config FILE and connects to source host 'sh'
+	and dumps all backup data into a individual backups sql files under folder $BACKUP_PATH
+	while applying where conditions on each table - as configured in useconfing $FILE 
+	\n\n";
+
+
+	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD --dh=HOST --du=USER --dp=PASSWORD {--locktables='Y'} 
+	Parses config FILE and connects to source host 'sh'
+	and dumps all backup data to another destination mysql-host $dh 
+	while applying where conditions on each table - as configured in useconfing $FILE 
+	\n\n";
 
 }
 
