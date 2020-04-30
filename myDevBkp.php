@@ -201,6 +201,13 @@ if( count($arguments) == 0 || (count($arguments) == 1 &&  array_key_exists('help
 	while applying where conditions on each table - as configured in useconfing FILE
 	\n\n";
 
+	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD --opf=dump.sql --onlySPVIEWS='Y'
+	Parses config FILE and connects to source host 'sh'
+	and dumps only StoredProcedures and Views into a single opf dump sql file
+	Will NOT use any where conditions on each table - as it does not loop through tables at all
+	Just loops through databases mentioned in the config file
+	\n\n";
+
 
 	echo "\n--useconfig=FILE --sh=HOST --su=USER --sp=PASSWORD --fullbackup=BACKUP_PATH {--locktables='Y'} 
 	Parses config FILE and connects to source host 'sh'
@@ -317,6 +324,7 @@ if( array_key_exists('useconfig', $arguments) ){
 
 	$opf = '' ;
 	$fullbackup = '' ;
+	$onlySPVIEWS = false ;
 	if( array_key_exists('opf', $arguments) ) {
 		if( strpos($arguments['opf'] , '/') === 0 ){
 			$holdingdir = dirname($arguments['opf']);
@@ -328,6 +336,10 @@ if( array_key_exists('useconfig', $arguments) ){
 			$opf = $pwd.$arguments['opf'] ;				
 		}
 		$pipe_destination = "" ;
+
+		if( array_key_exists('onlySPVIEWS', $arguments) && $arguments['onlySPVIEWS'] == 'Y' ){
+			$onlySPVIEWS = true ;
+		}
 	}elseif( array_key_exists('fullbackup', $arguments) ){
 		$fullbackup = $arguments['fullbackup'] ;
 		$lock_string = " --lock-tables " ;
@@ -363,7 +375,7 @@ if( array_key_exists('useconfig', $arguments) ){
 	foreach( $config as $dbname => $tables  ){
 		echo "\n********************";
 		echo "\nexporting database {$dbname}" ;
-		if($opf){
+		if($opf && !$onlySPVIEWS ){
 			file_put_contents( $opf , "\ndrop database if exists `{$dbname}` ; " , FILE_APPEND );
 			file_put_contents( $opf , "\ncreate database `{$dbname}` ; \n\n " , FILE_APPEND );
 			file_put_contents( $opf , "\nUSE `{$dbname}` ; \n\n " , FILE_APPEND );
@@ -374,7 +386,11 @@ if( array_key_exists('useconfig', $arguments) ){
 			exec( "echo 'create database `{$dbname}`' |  {$pipe_destination} ");
 		}
 
+		
 		foreach($tables as $this_tableName ){
+			if($onlySPVIEWS){
+				continue; // dont do any table related stuff when only stored procedures and Views are asked 
+			}
 			$where_string = (trim($this_tableName['whereCondition'])) ? " --where=\"{$this_tableName['whereCondition']}\" " : "" ; 
 
 			if(array_key_exists('skiptableslike', $arguments)){
@@ -401,7 +417,6 @@ if( array_key_exists('useconfig', $arguments) ){
 				}
 			}
 		}
-
 
 
 
