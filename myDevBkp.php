@@ -467,5 +467,6 @@ if( array_key_exists('useconfig', $arguments) ){
 	}
 
 }
+echo "\nFinsihed !\n";
 
 ?>
